@@ -48,7 +48,8 @@ jobs:
           cache: 'npm'
 
       - name: 📦 Install NPM Dependencies
-        run: npm ci
+        # package-lock.json is stale and omits Capacitor packages; npm install reconciles it.
+        run: npm install --no-audit --no-fund
 
       - name: 🏗️ Build Web Assets (Vite)
         run: npm run build
