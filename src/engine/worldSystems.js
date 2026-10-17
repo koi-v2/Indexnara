@@ -714,7 +714,7 @@ export function captureWorldHistory(state) {
 
 // Master tick cycle
 export function runSimulationCycle(prevState) {
-  const state = structuredClone(prevState);
+  const state = JSON.parse(JSON.stringify(prevState));
   advanceWorldCalendar(state);
   romanceAutoCycle(state);
   lawCycle(state);
