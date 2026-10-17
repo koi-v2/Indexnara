@@ -8,7 +8,7 @@ export default function SettingsPage() {
 
   const handleSave = () => {
     setState(prev => {
-      const next = structuredClone(prev);
+      const next = JSON.parse(JSON.stringify(prev));
       next.settings = next.settings || {};
       next.settings.cycleSeconds = Math.max(3, Math.min(120, Number(cycleSeconds) || 8));
       next.settings.logLimit = Math.max(100, Math.min(5000, Number(logLimit) || 400));
