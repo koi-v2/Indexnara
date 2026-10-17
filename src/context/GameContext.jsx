@@ -29,7 +29,21 @@ export function GameProvider({ children }) {
     if (running) {
       const intervalSec = Math.max(3, state.settings?.cycleSeconds || 8);
       timerRef.current = setInterval(() => {
-        setState(prev => runSimulationCycle(prev));
+        setState(prev => {
+          try {
+            return runSimulationCycle(prev);
+          } catch (error) {
+            // Keep a simulation bug from crashing the entire React UI.
+            setRunning(false);
+            const safeState = { ...prev, logs: Array.isArray(prev.logs) ? [...prev.logs] : [] };
+            addLog(
+              safeState,
+              'Simulasi dihentikan karena error: ' + (error?.message || String(error)),
+              'system'
+            );
+            return safeState;
+          }
+        });
       }, intervalSec * 1000);
     } else {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -45,7 +59,20 @@ export function GameProvider({ children }) {
   };
 
   const tickOnce = () => {
-    setState(prev => runSimulationCycle(prev));
+    setState(prev => {
+      try {
+        return runSimulationCycle(prev);
+      } catch (error) {
+        setRunning(false);
+        const safeState = { ...prev, logs: Array.isArray(prev.logs) ? [...prev.logs] : [] };
+        addLog(
+          safeState,
+          'Simulasi dihentikan karena error: ' + (error?.message || String(error)),
+          'system'
+        );
+        return safeState;
+      }
+    });
   };
 
   const openModal = ({ title, content }) => {
