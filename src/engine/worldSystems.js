@@ -715,14 +715,16 @@ export function captureWorldHistory(state) {
 // Master tick cycle
 export function runSimulationCycle(prevState) {
   const state = JSON.parse(JSON.stringify(prevState));
-  advanceWorldCalendar(state);
-  romanceAutoCycle(state);
-  lawCycle(state);
 
-  if (!state.characters.length) {
+  // Keep empty-world simulation safe: several subsystems expect initialized characters.
+  if (!Array.isArray(state.characters) || state.characters.length === 0) {
     addLog(state, 'Simulasi menunggu: tambahkan karakter terlebih dahulu.', 'system');
     return state;
   }
+
+  advanceWorldCalendar(state);
+  romanceAutoCycle(state);
+  lawCycle(state);
 
   towerEnsure(state);
   towerAutoCycle(state);
