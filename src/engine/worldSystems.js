@@ -20,7 +20,9 @@ import {
 import {
   awardMonsterDrops,
   awardGearDrop,
-  recordItemHistory
+  recordItemHistory,
+  aiAct,
+  openWorldEncounter
 } from './simulationCycle';
 
 export function towerEnsure(state) {
