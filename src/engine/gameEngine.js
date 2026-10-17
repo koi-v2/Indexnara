@@ -45,6 +45,55 @@ export function pickRandom(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+const STARTER_ROSTER_VERSION = 1;
+const STARTER_CHARACTERS = [
+  { name:'Akari Fujimoto', gender:'Perempuan', role:'Mage', personality:'Lembut dan teliti; suka mempelajari sihir pemulihan.', description:'Penyihir muda dari desa pegunungan yang ingin memahami sihir kuno agar bisa melindungi kampung halamannya.', atk:6, def:6, mag:14, agi:8, maxHp:85, maxMp:40 },
+  { name:'Haruto Kanzaki', gender:'Laki-laki', role:'Warrior', personality:'Berani, terus terang, dan selalu menepati janji.', description:'Anak pandai besi yang berkelana untuk membuktikan bahwa keberanian lebih penting daripada nama keluarga.', atk:14, def:10, mag:4, agi:7, maxHp:115, maxMp:25 },
+  { name:'Yuna Tachibana', gender:'Perempuan', role:'Healer', personality:'Penyayang dan sabar; mendahulukan keselamatan orang lain.', description:'Tabib keliling yang membawa catatan obat herbal peninggalan neneknya.', atk:5, def:8, mag:13, agi:7, maxHp:90, maxMp:38 },
+  { name:'Renji Takamura', gender:'Laki-laki', role:'Assassin', personality:'Pendiam, waspada, dan menyukai rencana yang rapi.', description:'Mantan kurir malam yang memakai kelincahan untuk mencari jejak kakaknya yang hilang.', atk:12, def:6, mag:5, agi:15, maxHp:95, maxMp:27 },
+  { name:'Sakura Minazuki', gender:'Perempuan', role:'Ranger', personality:'Ceria, mandiri, dan sangat menyukai alam liar.', description:'Pemanah hutan yang mengenali jejak hewan dan ingin memetakan seluruh wilayah Lumina.', atk:11, def:7, mag:6, agi:13, maxHp:100, maxMp:28 },
+  { name:'Daichi Moriyama', gender:'Laki-laki', role:'Guardian', personality:'Tenang, setia, dan rela menjadi pelindung kelompok.', description:'Penjaga gerbang desa yang memulai perjalanan setelah desanya selamat dari serangan monster.', atk:8, def:15, mag:4, agi:5, maxHp:125, maxMp:24 },
+  { name:'Mio Hoshikawa', gender:'Perempuan', role:'Mage', personality:'Penasaran, kreatif, dan mudah terpikat teka-teki.', description:'Peneliti bintang yang percaya bahwa pola rasi bintang menyimpan petunjuk tentang dungeon.', atk:5, def:6, mag:15, agi:9, maxHp:82, maxMp:42 },
+  { name:'Kaito Shiranui', gender:'Laki-laki', role:'Warrior', personality:'Kompetitif tetapi sportif; selalu menghormati lawan.', description:'Petarung jalanan yang ingin mengikuti turnamen arena untuk mendapatkan pengakuan.', atk:15, def:8, mag:3, agi:10, maxHp:110, maxMp:22 },
+  { name:'Hina Amamiya', gender:'Perempuan', role:'Healer', personality:'Optimistis, ramah, dan pandai menenangkan orang.', description:'Relawan rumah singgah yang belajar sihir penyembuhan agar dapat membantu para petualang.', atk:4, def:7, mag:14, agi:8, maxHp:88, maxMp:40 },
+  { name:'Souta Kirishima', gender:'Laki-laki', role:'Ranger', personality:'Praktis, sabar, dan ahli membaca arah.', description:'Pengantar barang antarwilayah yang mengenal jalan rahasia di sekitar Tambang Tua.', atk:10, def:8, mag:5, agi:13, maxHp:98, maxMp:26 },
+  { name:'Rin Kurosawa', gender:'Perempuan', role:'Assassin', personality:'Cermat, mandiri, dan jarang bertindak tanpa alasan.', description:'Penyelidik muda yang mencari bukti tentang kelompok pencuri artefak.', atk:13, def:6, mag:6, agi:14, maxHp:92, maxMp:29 },
+  { name:'Takumi Arai', gender:'Laki-laki', role:'Blacksmith', personality:'Rajin, teliti, dan senang memperbaiki barang rusak.', description:'Perajin logam pemula yang mengumpulkan material langka untuk membuat senjata pertamanya.', atk:9, def:10, mag:4, agi:6, maxHp:108, maxMp:24 },
+  { name:'Natsumi Hayase', gender:'Perempuan', role:'Merchant', personality:'Pandai bernegosiasi, hemat, dan jeli melihat peluang.', description:'Pedagang keliling yang bermimpi membangun jaringan toko dari kota kecil hingga ibu kota.', atk:5, def:7, mag:7, agi:10, maxHp:90, maxMp:27 },
+  { name:'Shun Arakawa', gender:'Laki-laki', role:'Mage', personality:'Analitis, serius, dan gemar mencatat hasil eksperimen.', description:'Murid akademi sihir yang meninggalkan ruang kelas demi menguji teorinya di lapangan.', atk:5, def:7, mag:15, agi:7, maxHp:84, maxMp:41 },
+  { name:'Ayame Sakuraba', gender:'Perempuan', role:'Warrior', personality:'Tegas, disiplin, dan menghargai latihan rutin.', description:'Pendekar dari dojo kecil yang mencari gaya bertarung baru untuk menyempurnakan tekniknya.', atk:13, def:11, mag:4, agi:8, maxHp:112, maxMp:23 },
+  { name:'Itsuki Nanase', gender:'Laki-laki', role:'Healer', personality:'Rendah hati, penuh empati, dan tidak suka pertengkaran.', description:'Pengelana yang mempelajari pertolongan pertama setelah pernah diselamatkan seorang tabib.', atk:5, def:8, mag:12, agi:7, maxHp:94, maxMp:36 },
+  { name:'Fuyumi Shibata', gender:'Perempuan', role:'Ranger', personality:'Berani, fokus, dan menyukai tantangan jarak jauh.', description:'Pemburu musim dingin yang ingin menemukan sumber material langka di wilayah bersalju.', atk:11, def:8, mag:6, agi:12, maxHp:99, maxMp:28 },
+  { name:'Toma Ichinose', gender:'Laki-laki', role:'Guardian', personality:'Sabar, bertanggung jawab, dan selalu menjaga formasi.', description:'Mantan pengawal karavan yang ingin membangun reputasi sebagai pelindung tepercaya.', atk:8, def:14, mag:4, agi:6, maxHp:122, maxMp:24 },
+  { name:'Koharu Nishimura', gender:'Perempuan', role:'Mage', personality:'Imajinatif, ceria, dan suka mencoba kombinasi sihir.', description:'Penyihir pemula yang menciptakan mantra kecil dari catatan resep dan cerita rakyat.', atk:6, def:5, mag:14, agi:9, maxHp:83, maxMp:42 },
+  { name:'Riku Matsuda', gender:'Laki-laki', role:'Assassin', personality:'Lincah, humoris, dan lebih suka menghindari konflik sia-sia.', description:'Pelari pesan yang memanfaatkan kecepatannya untuk menjelajahi lorong kota dan reruntuhan.', atk:12, def:6, mag:5, agi:15, maxHp:93, maxMp:27 },
+  { name:'Emi Kisaragi', gender:'Perempuan', role:'Merchant', personality:'Ramah, terorganisasi, dan selalu menghitung risiko.', description:'Pengelola kios keluarga yang ingin mengumpulkan modal untuk membuka penginapan petualang.', atk:5, def:8, mag:6, agi:9, maxHp:92, maxMp:28 },
+  { name:'Akio Endo', gender:'Laki-laki', role:'Blacksmith', personality:'Gigih, sederhana, dan bangga pada hasil kerja sendiri.', description:'Murid pandai besi yang mencari bijih terbaik untuk membuat perlengkapan yang tahan lama.', atk:10, def:11, mag:3, agi:6, maxHp:110, maxMp:22 },
+  { name:'Nozomi Kanzawa', gender:'Perempuan', role:'Healer', personality:'Bijaksana, telaten, dan mudah dipercaya teman baru.', description:'Penjaga klinik desa yang ingin menemukan obat bagi penyakit misterius di perbatasan.', atk:4, def:8, mag:15, agi:7, maxHp:87, maxMp:41 },
+  { name:'Yuto Saionji', gender:'Laki-laki', role:'Ranger', personality:'Santai, observatif, dan menyukai perjalanan panjang.', description:'Pencatat peta yang menggambar ulang jalur aman setelah perubahan monster di hutan.', atk:10, def:8, mag:6, agi:12, maxHp:100, maxMp:28 },
+  { name:'Chihiro Ogasawara', gender:'Perempuan', role:'Guardian', personality:'Berani, protektif, dan tidak mudah menyerah.', description:'Mantan penjaga kuil yang membawa perisai tua untuk melindungi orang-orang yang ditemuinya.', atk:8, def:14, mag:5, agi:6, maxHp:120, maxMp:26 },
+  { name:'Masato Kuroki', gender:'Laki-laki', role:'Warrior', personality:'Bersemangat, pekerja keras, dan suka membantu pemula.', description:'Petani yang berlatih menggunakan pedang kayu dan kini ingin mencoba hidup sebagai petualang.', atk:14, def:10, mag:3, agi:7, maxHp:114, maxMp:22 },
+  { name:'Suzume Hanabishi', gender:'Perempuan', role:'Assassin', personality:'Cerdik, sabar, dan senang memecahkan misteri.', description:'Penyusup berbakat yang menerima pekerjaan mencari barang hilang tanpa menyakiti warga.', atk:12, def:6, mag:7, agi:14, maxHp:91, maxMp:30 },
+  { name:'Keisuke Fushimi', gender:'Laki-laki', role:'Mage', personality:'Penuh rasa ingin tahu, logis, dan teliti terhadap detail.', description:'Arsiparis muda yang menguji teori sihir melalui simbol-simbol pada reruntuhan kuno.', atk:5, def:7, mag:15, agi:8, maxHp:85, maxMp:40 },
+  { name:'Madoka Tsukishima', gender:'Perempuan', role:'Ranger', personality:'Mandiri, berani, dan menghormati keseimbangan alam.', description:'Penjaga jalur hutan yang berusaha melacak monster tanpa mengganggu satwa liar.', atk:11, def:8, mag:6, agi:13, maxHp:98, maxMp:27 },
+  { name:'Daiki Yokoyama', gender:'Laki-laki', role:'Warrior', personality:'Setia kawan, optimistis, dan tidak mudah patah semangat.', description:'Anak penjaga penginapan yang ingin menjadi pahlawan lokal dan membantu membangun kembali jalan dagang.', atk:13, def:10, mag:4, agi:8, maxHp:113, maxMp:24 }
+];
+
+function createStarterCharacters() {
+  return STARTER_CHARACTERS.map((c, index) => ({
+    id: 'starter_' + (index + 1),
+    ...c,
+    age: 18, level: 1, xp: 0,
+    hp: c.maxHp, mp: c.maxMp,
+    gold: 100, photo: '',
+    aiStyle: c.role === 'Mage' ? 'tactical' : c.role === 'Healer' ? 'support' : c.role === 'Merchant' || c.role === 'Blacksmith' ? 'collector' : c.role === 'Ranger' ? 'explorer' : 'warrior',
+    aiGoal: c.role === 'Merchant' || c.role === 'Blacksmith' ? 'gold' : c.role === 'Healer' ? 'helpful' : c.role === 'Ranger' ? 'exploration' : 'level up',
+    inventory: [], equipment: { weapon: null, armor: null, accessory: null },
+    locationId: 'town', status: 'Bebas', lastAction: 'Baru bergabung',
+    created: new Date().toISOString(), skills: generateCharacterSkills()
+  }));
+}
+
 export function generateCharacterSkills() {
   const keys = Object.keys(SKILL_ARCHETYPES);
   const first = pickRandom(keys);
@@ -168,7 +217,8 @@ export function ensureCharacterSkills(c) {
 
 export function getDefaultState() {
   return {
-    characters: [],
+    characters: createStarterCharacters(),
+    starterRosterVersion: STARTER_ROSTER_VERSION,
     guilds: [],
     shop: [...fixedPotions],
     logs: [],
@@ -217,6 +267,10 @@ export function loadInitialState() {
         return {
           ...d,
           ...parsed,
+          ...(!parsed.starterRosterVersion ? {
+            characters: [...parsed.characters, ...createStarterCharacters().filter(s => !parsed.characters.some(c => c.id === s.id))],
+            starterRosterVersion: STARTER_ROSTER_VERSION
+          } : {}),
           running: false,
           shop: [...fixedPotions, ...(parsed.shop || []).filter(i => !['hp_potion', 'mp_potion'].includes(i.id))],
           locations: (Array.isArray(parsed.locations) && parsed.locations.length) ? parsed.locations : d.locations,
