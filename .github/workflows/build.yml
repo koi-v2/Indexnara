@@ -36,23 +36,23 @@ jobs:
           java-version: '21'
           cache: 'gradle'
 
-      - name: 📱 Terima Lisensi Android SDK
-        run: |
-          yes | sdkmanager --licenses || true
+      - name: 🤖 Setup Android SDK
+        uses: android-actions/setup-android@v3
 
-      - name: 🟢 Setup Node.js 20
+      - name: 📱 Terima Lisensi Android SDK
+        run: yes | sdkmanager --licenses
+
+      - name: 🟢 Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
       - name: 📦 Install NPM Dependencies
-        run: |
-          npm install
+        run: npm ci
 
       - name: 🏗️ Build Web Assets (Vite)
-        run: |
-          npm run build
+        run: npm run build
 
       - name: 🔄 Siapkan & Sync Capacitor Android
         run: |
