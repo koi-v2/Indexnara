@@ -9,7 +9,8 @@ import {
   addLog,
   addChronicle,
   titlePerk,
-  reputationLabel
+  reputationLabel,
+  advanceWorldCalendar
 } from './gameEngine';
 import {
   towerMonsterSets,
