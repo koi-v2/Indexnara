@@ -60,6 +60,8 @@ export default function CharactersPage() {
             <div className="statbox"><b>{c.mag || 5}</b><small>MAG</small></div>
           </div>
 
+          <p><strong>Gender:</strong> {c.gender || 'Belum diatur'}</p>
+          {c.description ? <p><strong>Deskripsi:</strong> {c.description}</p> : null}
           <p><strong>Kepribadian:</strong> {c.personality || 'Tenang dan suka bertualang.'}</p>
           <p><strong>Tujuan AI:</strong> {c.aiGoal || 'balanced'}</p>
           <p><strong>Aktivitas Terakhir:</strong> {c.lastAction || 'Baru bergabung'}</p>
