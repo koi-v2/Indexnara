@@ -10,7 +10,7 @@ export default function LawPage() {
 
   // Automatic justice pipeline: investigate reported cases, then hold a simulated hearing.
   useEffect(() => {
-    const pending = crimes.find(c => !c.punished && ['Menunggu investigasi', 'Menunggu keputusan', 'Bukti lemah'].includes(c.status));
+    const pending = crimes.find(c => !c.punished && ['Menunggu investigasi', 'Menunggu keputusan', 'Bukti lemah', 'Menunggu sidang otomatis'].includes(c.status));
     if (!pending) return;
     const timer = setTimeout(() => {
       setState(prev => {
