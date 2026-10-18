@@ -479,21 +479,30 @@ export function resolveFatality(state, c, context, baseChance) {
   c.deathAt = new Date().toISOString();
   c.deathCause = context;
   state.deathRecords = Array.isArray(state.deathRecords) ? state.deathRecords : [];
-  state.deathRecords.unshift({
+  const record = {
     id: uid(),
     characterId: c.id,
     characterName: c.name,
     at: c.deathAt,
     cause: context,
     level: c.level || 1,
-    age: c.age || 18
-  });
+    age: c.age || 18,
+    gender: c.gender || 'Tidak diketahui',
+    role: c.role || 'Adventurer',
+    activeTitle: c.activeTitle || '',
+    titles: Array.isArray(c.titles) ? [...c.titles] : [],
+    achievements: Array.isArray(c.achievements) ? [...c.achievements] : [],
+    achievementsStats: c.achievementsStats ? { ...c.achievementsStats } : {},
+    description: c.description || ''
+  };
+  state.deathRecords.unshift(record);
   state.deathRecords = state.deathRecords.slice(0, 300);
+  // Remove from the living roster; the permanent death record keeps titles and achievements.
+  state.characters = (state.characters || []).filter(x => x.id !== c.id);
   addLog(state, `☠ ${c.name} meninggal saat ${context}. Petualangannya berakhir.`, 'death', c.id);
   addChronicle(state, `${c.name} meninggal saat ${context}. Namanya tercatat dalam sejarah dunia.`, 'death');
   return true;
 }
-
 export function runAnnualArena(state) {
   const eligible = state.characters.filter(c => !c.retired && !c.dead);
   if (eligible.length < 2) {
