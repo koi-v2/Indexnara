@@ -559,8 +559,8 @@ export function runAnnualArena(state) {
 export function advanceWorldCalendar(state) {
   const cal = state.worldCalendar || (state.worldCalendar = { year: 1, month: 1, day: 1, progressSeconds: 0 });
   cal.progressSeconds = (Number(cal.progressSeconds) || 0) + Math.max(3, Number(state.settings?.cycleSeconds) || 8);
-  if (cal.progressSeconds < 600) return;
-  cal.progressSeconds -= 600;
+  if (cal.progressSeconds < 120) return;
+  cal.progressSeconds -= 120;
   cal.day++;
   if (cal.day > 30) {
     cal.day = 1;
