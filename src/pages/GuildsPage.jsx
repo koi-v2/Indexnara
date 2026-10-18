@@ -7,6 +7,10 @@ export default function GuildsPage() {
   const guilds = state.guilds || [];
   const characters = state.characters || [];
 
+  const openMemberModal = (guild) => {
+    openModal({ title: 'Tambah Anggota — ' + guild.name, content: <AddGuildMemberForm guild={guild} /> });
+  };
+
   const openCreateModal = () => {
     openModal({
       title: 'Bentuk Guild Baru',
@@ -78,7 +82,8 @@ export default function GuildsPage() {
                   )}
                 </div>
 
-                <div className="row">
+                <div className="row" style={{ flexWrap: 'wrap' }}>
+                  <button className="primary" onClick={() => openMemberModal(g)}>＋ Tambah Anggota</button>
                   <button className="danger" onClick={() => deleteGuild(g.id)}>Bubarkan Guild</button>
                 </div>
               </div>
@@ -102,7 +107,7 @@ function GuildForm() {
     if (!name.trim()) return;
 
     setState(prev => {
-      const next = structuredClone(prev);
+      const next = JSON.parse(JSON.stringify(prev));
       const newGuild = {
         id: uid(),
         name: name.trim(),
@@ -138,4 +143,41 @@ function GuildForm() {
       </div>
     </form>
   );
+}
+
+
+function AddGuildMemberForm({ guild }) {
+  const { state, setState, closeModal } = useGame();
+  const eligible = (state.characters || []).filter(c => !c.guildId && !c.dead && !c.retired);
+  const [selectedId, setSelectedId] = useState(eligible[0]?.id || '');
+
+  const submit = (e) => {
+    e.preventDefault();
+    if (!selectedId) return;
+    const member = eligible.find(c => c.id === selectedId);
+    if (!member) return;
+    setState(prev => {
+      const next = { ...prev,
+        characters: (prev.characters || []).map(c => c.id === selectedId ? { ...c, guildId: guild.id } : c),
+        guilds: (prev.guilds || []).map(g => g.id === guild.id ? { ...g, members: [...(g.members || []).filter(id => id !== selectedId), selectedId] } : g),
+        logs: [...(prev.logs || [])], chronicle: [...(prev.chronicle || [])]
+      };
+      addLog(next, member.name + ' bergabung dengan Guild ' + guild.name + '.', 'guild', member.id);
+      addChronicle(next, member.name + ' menjadi anggota Guild ' + guild.name + '.', 'guild');
+      return next;
+    });
+    closeModal();
+  };
+
+  return <form onSubmit={submit}>
+    {eligible.length ? <>
+      <p className="muted small">Pilih karakter yang belum memiliki guild.</p>
+      <div className="field"><label>Karakter</label>
+        <select value={selectedId} onChange={e => setSelectedId(e.target.value)}>
+          {eligible.map(c => <option key={c.id} value={c.id}>{c.name} · Lv.{c.level} · {c.gender || 'Gender belum diatur'}</option>)}
+        </select>
+      </div>
+      <div className="modalfoot"><button type="button" onClick={closeModal}>Batal</button><button className="primary" type="submit">Tambahkan</button></div>
+    </> : <><p>Semua karakter aktif sudah memiliki guild, atau belum ada karakter yang tersedia.</p><div className="modalfoot"><button type="button" onClick={closeModal}>Tutup</button></div></>}
+  </form>;
 }
