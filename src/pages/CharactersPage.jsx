@@ -158,6 +158,8 @@ function CharForm({ existing = null }) {
   const { setState, closeModal } = useGame();
   const [name, setName] = useState(existing?.name || '');
   const [role, setRole] = useState(existing?.role || 'Warrior');
+  const [gender, setGender] = useState(existing?.gender || 'Laki-laki');
+  const [description, setDescription] = useState(existing?.description || '');
   const [level, setLevel] = useState(existing?.level || 1);
   const [hp, setHp] = useState(existing?.maxHp || 100);
   const [mp, setMp] = useState(existing?.maxMp || 30);
@@ -179,6 +181,8 @@ function CharForm({ existing = null }) {
             ...c,
             name: name.trim(),
             role,
+            gender,
+            description: description.trim() || c.description || '',
             level: Number(level),
             maxHp: Number(hp),
             hp: Math.min(c.hp || Number(hp), Number(hp)),
@@ -196,6 +200,8 @@ function CharForm({ existing = null }) {
           id: uid(),
           name: name.trim(),
           role,
+          gender,
+          description: description.trim() || 'Petualang baru yang ingin menemukan jalannya sendiri di dunia ini.',
           age: 18,
           level: Number(level),
           maxHp: Number(hp),
@@ -237,6 +243,13 @@ function CharForm({ existing = null }) {
           <input required value={name} onChange={e => setName(e.target.value)} placeholder="Contoh: Kaelen Ashford" />
         </div>
         <div className="field">
+          <label>Gender</label>
+          <select value={gender} onChange={e => setGender(e.target.value)}>
+            <option value="Laki-laki">Laki-laki</option>
+            <option value="Perempuan">Perempuan</option>
+          </select>
+        </div>
+        <div className="field">
           <label>Role</label>
           <select value={role} onChange={e => setRole(e.target.value)}>
             <option value="Warrior">Warrior</option>
@@ -276,6 +289,10 @@ function CharForm({ existing = null }) {
         <div className="field">
           <label>Gold Awal</label>
           <input type="number" min="0" value={gold} onChange={e => setGold(e.target.value)} />
+        </div>
+        <div className="field full">
+          <label>Deskripsi Karakter</label>
+          <textarea rows={3} value={description} onChange={e => setDescription(e.target.value)} placeholder="Latar belakang dan tujuan karakter..." />
         </div>
         <div className="field full">
           <label>Kepribadian</label>
