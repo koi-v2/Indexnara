@@ -470,7 +470,7 @@ export function checkAchievements(c) {
 
 export function resolveFatality(state, c, context, baseChance) {
   if (!c || c.dead || c.retired) return false;
-  const chance = Math.max(0, Math.min(0.25, Number(baseChance) || 0));
+  const chance = Math.max(0, Math.min(0.05, Number(baseChance) || 0));
   if (Math.random() >= chance) return false;
   c.dead = true;
   c.retired = true;
