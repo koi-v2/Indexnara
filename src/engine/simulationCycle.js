@@ -482,10 +482,43 @@ export function locationAction(state, c, t) {
   return false;
 }
 
+function autoCraftForCharacter(state, c) {
+  c.materials = c.materials && typeof c.materials === 'object' ? c.materials : {};
+  c.inventory = Array.isArray(c.inventory) ? c.inventory : [];
+  const recipes = Object.entries(craftRecipes || {});
+  // Craft a useful potion when low on consumables, otherwise craft one affordable upgrade.
+  const hpCount = c.inventory.filter(i => i.effect === 'hp' && (Number(i.qty) || 0) > 0).reduce((n, i) => n + i.qty, 0);
+  const mpCount = c.inventory.filter(i => i.effect === 'mp' && (Number(i.qty) || 0) > 0).reduce((n, i) => n + i.qty, 0);
+  let candidates = recipes.filter(([key, r]) => {
+    if (!r || !r.need) return false;
+    if (r.effect === 'hp' && hpCount >= 2) return false;
+    if (r.effect === 'mp' && mpCount >= 2) return false;
+    if (r.type !== 'consumable' && c.level < 3) return false;
+    if (r.type !== 'consumable' && c.inventory.some(i => i.name === r.name)) return false;
+    return Object.entries(r.need).every(([mat, qty]) => (Number(c.materials[mat]) || 0) >= qty);
+  });
+  if (!candidates.length || Math.random() > 0.22) return false;
+  candidates.sort((a, b) => {
+    const rank = ([, r]) => r.type === 'consumable' ? 0 : (r.rarity === 'Legendary' ? 4 : r.rarity === 'Epic' ? 3 : r.rarity === 'Rare' ? 2 : 1);
+    return rank(b) - rank(a);
+  });
+  const [key, recipe] = candidates[0];
+  for (const [mat, qty] of Object.entries(recipe.need)) c.materials[mat] -= qty;
+  c.inventory.push({
+    id: uid(), name: recipe.name, qty: 1, type: recipe.type, rarity: recipe.rarity,
+    atk: recipe.atk || 0, def: recipe.def || 0, mag: recipe.mag || 0,
+    effect: recipe.effect || null, heal: recipe.heal || 0, restore: recipe.restore || 0,
+    hpBonus: recipe.hpBonus || 0, equipped: false, crafted: true
+  });
+  addLog(state, `${c.name} otomatis membuat ${recipe.name} dari material yang dikumpulkan.`, 'craft', c.id);
+  return true;
+}
+
 export function aiAct(state, c) {
   if (isCharacterRestricted(state, c)) return;
   const t = personalityTraits(c);
   autoSkillBrain(state, c, t);
+  if (autoCraftForCharacter(state, c)) return;
 
   if ((c.hp || 0) < (c.maxHp || 100) * 0.45) {
     if (usePotion(c, 'hp')) return;
