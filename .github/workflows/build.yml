@@ -36,6 +36,26 @@ jobs:
           java-version: '21'
           cache: 'gradle'
 
+      # Reuse one debug signing key across builds so new APKs can update the installed app.
+      - name: 🔐 Restore stable debug signing key
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: naraapp-stable-debug-keystore-v1
+
+      - name: 🔑 Create stable debug signing key if missing
+        run: |
+          mkdir -p ~/.android
+          if [ ! -f ~/.android/debug.keystore ]; then
+            keytool -genkeypair -v \
+              -keystore ~/.android/debug.keystore \
+              -storepass android \
+              -alias androiddebugkey \
+              -keypass android \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
       - name: 🤖 Setup Android SDK
         uses: android-actions/setup-android@v4
         with:
