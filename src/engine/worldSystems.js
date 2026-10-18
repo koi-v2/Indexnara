@@ -144,7 +144,7 @@ export function towerAttempt(state, c, manual = false) {
   } else {
     p.losses = (p.losses || 0) + 1;
     c.hp = Math.max(1, Math.floor((c.maxHp || 100) * 0.25));
-    if (resolveFatality(state, c, `ekspedisi Tower lantai ${floor} melawan ${enemy.name}`, enemy.boss ? 0.1 : 0.02)) {
+    if (resolveFatality(state, c, `ekspedisi Tower lantai ${floor} melawan ${enemy.name}`, enemy.boss ? 0.025 : 0.004)) {
       p.lastRunResult = 'Meninggal';
       state.tower.history.unshift({
         id: uid(),
