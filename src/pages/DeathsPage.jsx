@@ -22,8 +22,11 @@ export default function DeathsPage() {
               <time>{fmtTime(d.at)}</time>
               <b>☠ {d.characterName}</b>
               <p className="small muted">
-                Lv {Number(d.level || 1)} · Usia {Number(d.age || 18)} · {d.cause || 'Penyebab tidak diketahui'}
+                Lv {Number(d.level || 1)} · Usia {Number(d.age || 18)} · {d.gender || 'Gender tidak tercatat'} · {d.role || 'Adventurer'} · {d.cause || 'Penyebab tidak diketahui'}
               </p>
+              {d.activeTitle ? <p className="small">Title aktif saat meninggal: ✦ {d.activeTitle} ✦</p> : null}
+              {(d.titles || []).length > 0 ? <p className="small">Semua title: {(d.titles || []).join(', ')}</p> : null}
+              {(d.achievements || []).length > 0 ? <p className="small">Pencapaian: {(d.achievements || []).join(', ')}</p> : <p className="small muted">Tidak ada pencapaian tercatat.</p>}
             </div>
           ))
         ) : (
