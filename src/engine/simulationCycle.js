@@ -364,7 +364,7 @@ export function adventure(state, c, id, manual = false) {
     c.hp = Math.max(1, c.hp - damage);
     c.lastAction = 'Kalah/mundur dari ' + d.name;
     c.status = 'Bebas';
-    if (resolveFatality(state, c, 'ekspedisi dungeon ' + d.name, 0.035)) return;
+    if (resolveFatality(state, c, 'ekspedisi dungeon ' + d.name, 0.008)) return;
     addLog(state, `${c.name} gagal menaklukkan ${d.name} dan mundur untuk memulihkan diri.`, 'dungeon', c.id);
   }
 }
@@ -392,7 +392,7 @@ export function openWorldEncounter(state, c) {
     return true;
   }
   c.hp = Math.max(1, Math.floor((c.maxHp || 100) * 0.4));
-  if (resolveFatality(state, c, 'pertarungan melawan ' + enemy.name, boss ? 0.12 : 0.025)) return false;
+  if (resolveFatality(state, c, 'pertarungan melawan ' + enemy.name, boss ? 0.03 : 0.004)) return false;
   addLog(state, `${c.name} mundur dari ${enemy.name} di ${region.name}.`, 'monster', c.id);
   return false;
 }
