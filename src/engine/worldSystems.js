@@ -392,6 +392,72 @@ export function businessCycle(state) {
     }
     if (isImprisoned(state, owner)) return;
 
+    // Restock potions from the wholesale system shop. Keep a safe margin and never spend the owner's last coins.
+    state.shop = Array.isArray(state.shop) ? state.shop : [];
+    b.stock = b.stock || {};
+    b.stockMeta = b.stockMeta || {};
+    const wholesalePotions = state.shop.filter(i => (i.effect === 'hp' || i.effect === 'mp') && /potion/i.test(i.name || ''));
+    for (const item of wholesalePotions) {
+      const current = Number(b.stock[item.name]) || 0;
+      const target = 4;
+      if (current >= target) continue;
+      const cost = Math.max(1, Number(item.price) || 25);
+      const buyQty = Math.min(target - current, Math.floor(Math.max(0, (Number(owner.gold) || 0) - 30) / cost), 2);
+      if (buyQty <= 0) continue;
+      const total = buyQty * cost;
+      owner.gold -= total;
+      b.stock[item.name] = current + buyQty;
+      const sell = Math.max(cost + 1, Math.ceil(cost * 1.4));
+      b.stockMeta[item.name] = { ...(b.stockMeta[item.name] || {}), cost, sell, qty: b.stock[item.name] };
+      b.itemsBought = (Number(b.itemsBought) || 0) + total;
+      b.stockValue = (Number(b.stockValue) || 0) + total;
+      addLog(state, `${owner.name} membeli ${buyQty} ${item.name} dari grosir seharga ${total} gold untuk bisnis ${b.name}.`, 'business', owner.id);
+    }
+
+    // Customers without a business buy potions from character-owned shops; the payment goes to the owner.
+    const shoppers = (state.characters || []).filter(c => c.id !== owner.id && !c.dead && !c.retired && !c.businessId && !c.business);
+    for (const shopper of shoppers) {
+      if (Math.random() > 0.08) continue;
+      const needsHp = (Number(shopper.hp) || 0) < (Number(shopper.maxHp) || 100) * 0.55;
+      const needsMp = (Number(shopper.mp) || 0) < (Number(shopper.maxMp) || 30) * 0.35;
+      const wanted = needsHp ? 'HP Potion' : needsMp ? 'MP Potion' : null;
+      if (!wanted || (Number(shopper.gold) || 0) < 1) continue;
+      const available = state.businesses.filter(shop => shop.active && shop.stock && (Number(shop.stock[wanted]) || 0) > 0 && shop.ownerId !== shopper.id);
+      const shop = available[Math.floor(Math.random() * available.length)];
+      if (!shop) continue;
+      const meta = shop.stockMeta?.[wanted] || { cost: 25, sell: 35 };
+      const price = Math.max((Number(meta.cost) || 25) + 1, Number(meta.sell) || 35);
+      if ((Number(shopper.gold) || 0) < price) continue;
+      shopper.gold -= price;
+      shopper.inventory = Array.isArray(shopper.inventory) ? shopper.inventory : [];
+      const itemDef = state.shop.find(i => i.name === wanted) || {};
+      const inv = shopper.inventory.find(i => i.name === wanted && i.effect === (wanted === 'HP Potion' ? 'hp' : 'mp'));
+      if (inv) inv.qty = (Number(inv.qty) || 0) + 1;
+      else shopper.inventory.push({ ...itemDef, id: uid(), name: wanted, qty: 1, type: 'consumable', effect: wanted === 'HP Potion' ? 'hp' : 'mp' });
+      shop.stock[wanted]--;
+      if (shop.stockMeta?.[wanted]) shop.stockMeta[wanted].qty = Math.max(0, (Number(shop.stockMeta[wanted].qty) || 1) - 1);
+      const shopOwner = state.characters.find(x => x.id === shop.ownerId);
+      if (shopOwner) shopOwner.gold = (Number(shopOwner.gold) || 0) + price;
+      shop.sales = (Number(shop.sales) || 0) + price;
+      shop.salesProfit = (Number(shop.salesProfit) || 0) + (price - (Number(meta.cost) || 25));
+      shop.revenue = (Number(shop.revenue) || 0) + price;
+      shop.profit = (Number(shop.profit) || 0) + (price - (Number(meta.cost) || 25));
+      addLog(state, `${shopper.name} membeli ${wanted} dari toko ${shop.name} milik ${shopOwner?.name || 'pemilik bisnis'} seharga ${price} gold.`, 'business', shopper.id);
+    }
+
+    // Sell excess materials to the wholesale system shop at deliberately low prices.
+    const materialPrices = { 'Slime Gel': 2, 'Nature Essence': 5, 'Mana Essence': 4, 'Crude Ore': 3, 'Goblin Steel': 8, 'Crystal': 6, 'Treant Bark': 5, 'Dragon Scale': 15, 'Elder Dragon Heart': 25, 'Abyssal Core': 30, 'Void Essence': 12, 'Eternal Core': 40, 'Eternity Fragment': 18 };
+    (state.characters || []).filter(c => !c.dead && !c.retired && c.id !== owner.id).forEach(seller => {
+      if (Math.random() > 0.025 || !seller.materials) return;
+      const material = Object.keys(seller.materials).find(n => (Number(seller.materials[n]) || 0) > 0);
+      if (!material) return;
+      const qty = Math.min(Number(seller.materials[material]) || 0, 3);
+      const price = materialPrices[material] || 1;
+      seller.materials[material] -= qty;
+      seller.gold = (Number(seller.gold) || 0) + qty * price;
+      addLog(state, `${seller.name} menjual ${qty} ${material} ke grosir seharga ${qty * price} gold.`, 'shop', seller.id);
+    });
+
     // customer sales
     for (const name of Object.keys(b.stock || {})) {
       const qty = Number(b.stock[name]) || 0;
