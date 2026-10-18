@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useGame } from '../context/GameContext';
 import { uid, addLog, fmtTime, generateCharacterSkills } from '../engine/gameEngine';
 
@@ -7,6 +7,38 @@ export default function RelationshipsPage() {
   const relationships = state.relationships || [];
   const familyEvents = state.familyEvents || [];
   const active = relationships.filter(r => r.status !== 'Berakhir');
+
+  // Tutup hubungan lama jika salah satu pasangan meninggal, pensiun, hilang, atau gender sama.
+  useEffect(() => {
+    const chars = state.characters || [];
+    const needsCleanup = (state.relationships || []).some(r => {
+      if (r.status === 'Berakhir') return false;
+      const a = chars.find(c => c.id === r.a);
+      const b = chars.find(c => c.id === r.b);
+      return !a || !b || a.dead || a.retired || b.dead || b.retired || !a.gender || !b.gender || a.gender === b.gender;
+    });
+    if (!needsCleanup) return;
+    setState(prev => {
+      const next = structuredClone(prev);
+      const charsNow = next.characters || [];
+      (next.relationships || []).forEach(r => {
+        if (r.status === 'Berakhir') return;
+        const a = charsNow.find(c => c.id === r.a);
+        const b = charsNow.find(c => c.id === r.b);
+        const invalid = !a || !b || a.dead || a.retired || b.dead || b.retired || !a.gender || !b.gender || a.gender === b.gender;
+        if (!invalid) return;
+        r.status = 'Berakhir';
+        r.endedAt = Date.now();
+        r.endReason = (!a || !b || a?.dead || a?.retired || b?.dead || b?.retired) ? 'Pasangan meninggal atau tidak lagi aktif' : 'Tidak memenuhi aturan gender pasangan';
+        if (a?.spouseId === b?.id) delete a.spouseId;
+        if (b?.spouseId === a?.id) delete b.spouseId;
+        next.familyEvents = next.familyEvents || [];
+        next.familyEvents.push({ at: Date.now(), text: `${a?.name || 'Karakter'} dan ${b?.name || 'pasangannya'} mengakhiri hubungan: ${r.endReason}.` });
+        addLog(next, `${a?.name || 'Karakter'} dan ${b?.name || 'pasangannya'}: hubungan berakhir (${r.endReason}).`, 'family');
+      });
+      return next;
+    });
+  }, [state.relationships, state.characters, setState]);
   const ended = relationships.filter(r => r.status === 'Berakhir');
 
   const getChar = (id) => (state.characters || []).find(c => c.id === id);
@@ -14,6 +46,7 @@ export default function RelationshipsPage() {
   const handleStart = () => {
     const pool = (state.characters || []).filter(c =>
       !c.retired && !c.dead && Number(c.age ?? 18) >= 18 &&
+      (c.gender === 'Laki-laki' || c.gender === 'Perempuan') &&
       !active.some(r => r.a === c.id || r.b === c.id)
     );
     if (pool.length < 2) {
@@ -27,7 +60,7 @@ export default function RelationshipsPage() {
       alert('Karakter pertama tidak ditemukan.');
       return;
     }
-    const options = pool.filter(c => c.id !== a.id);
+    const options = pool.filter(c => c.id !== a.id && c.gender !== a.gender);
     const bn = window.prompt('Masukkan nama karakter kedua:\n' + options.map(c => c.name + ' (usia ' + Number(c.age ?? 18) + ')').join('\n'));
     if (!bn) return;
     const b = options.find(c => String(c.name).toLowerCase() === bn.trim().toLowerCase());
