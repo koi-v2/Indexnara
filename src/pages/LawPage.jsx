@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useGame } from '../context/GameContext';
 import { uid, addLog, addChronicle, fmtTime } from '../engine/gameEngine';
 
@@ -7,6 +7,84 @@ export default function LawPage() {
   const crimes = state.crimes || [];
   const punishments = (state.punishments || []).filter(p => p.active);
   const cs = (state.characters || []).filter(c => !c.retired && !c.dead);
+
+  // Automatic justice pipeline: investigate reported cases, then hold a simulated hearing.
+  useEffect(() => {
+    const pending = crimes.find(c => !c.punished && ['Menunggu investigasi', 'Menunggu keputusan', 'Bukti lemah'].includes(c.status));
+    if (!pending) return;
+    const timer = setTimeout(() => {
+      setState(prev => {
+        const next = structuredClone(prev);
+        const cr = (next.crimes || []).find(c => c.id === pending.id);
+        if (!cr || cr.punished) return prev;
+
+        if (cr.status === 'Menunggu investigasi') {
+          const witnesses = Array.isArray(cr.witnesses) ? cr.witnesses : [];
+          const roll = Math.random();
+          const falseReport = Math.random() < 0.12;
+          const weakEvidence = witnesses.length === 0 && roll < 0.7;
+          cr.investigation = {
+            completedAt: new Date().toISOString(),
+            alibiChecked: true,
+            falseReport,
+            witnessCount: witnesses.length
+          };
+          if (falseReport) {
+            cr.evidenceLevel = 'Lemah';
+            cr.status = 'Menunggu sidang otomatis';
+            cr.evidence = (cr.evidence || '') + ' Investigasi menemukan indikasi laporan palsu; tuduhan tidak didukung bukti yang dapat diverifikasi.';
+          } else if (weakEvidence) {
+            cr.evidenceLevel = 'Lemah';
+            cr.status = 'Menunggu sidang otomatis';
+            cr.evidence = (cr.evidence || '') + ' Tidak ditemukan bukti independen yang cukup; alibi belum dapat dibantah.';
+          } else {
+            cr.evidenceLevel = witnesses.length >= 2 || roll < 0.45 ? 'Kuat' : 'Sedang';
+            cr.status = 'Menunggu sidang otomatis';
+            cr.evidence = (cr.evidence || '') + ' Investigasi otomatis memeriksa saksi, bukti, dan kemungkinan alibi.';
+          }
+          addLog(next, 'Investigasi otomatis selesai untuk kasus ' + cr.characterName + ': bukti ' + cr.evidenceLevel + '.', 'law', cr.characterId);
+          return next;
+        }
+
+        if (cr.status === 'Menunggu sidang otomatis') {
+          const level = cr.evidenceLevel || 'Lemah';
+          const acquitted = level === 'Lemah' || cr.investigation?.falseReport === true ||
+            (cr.investigation?.alibiChecked && (cr.witnesses || []).length === 0);
+          cr.punished = true;
+          cr.verdict = acquitted ? 'Bebas' : 'Bersalah';
+          cr.status = acquitted
+            ? (cr.investigation?.falseReport ? 'Dibebaskan — indikasi fitnah / bukti tidak cukup' : 'Dibebaskan — bukti tidak cukup')
+            : 'Putusan dijatuhkan: hukuman otomatis';
+          cr.verdictAt = new Date().toISOString();
+
+          if (!acquitted) {
+            const c = (next.characters || []).find(x => x.id === cr.characterId);
+            if (c) {
+              const fine = Math.min(Math.max(0, Number(c.gold) || 0), 10 + Math.floor(Math.random() * 31));
+              c.gold = Math.max(0, (Number(c.gold) || 0) - fine);
+              next.punishments = Array.isArray(next.punishments) ? next.punishments : [];
+              next.punishments.unshift({
+                id: uid(), characterId: c.id, characterName: c.name,
+                type: 'Denda', reason: cr.reason, fine, cyclesLeft: 3,
+                active: true, at: new Date().toISOString(), caseId: cr.id,
+                automatic: true
+              });
+              cr.fine = fine;
+              addLog(next, 'Sidang otomatis: ' + c.name + ' dinyatakan bersalah dan didenda ' + fine + ' gold.', 'law', c.id);
+              addChronicle(next, 'Sidang otomatis menyatakan ' + c.name + ' bersalah; denda ' + fine + ' gold.', 'law');
+            }
+          } else {
+            addLog(next, 'Sidang otomatis membebaskan ' + cr.characterName + ' karena bukti tidak cukup atau indikasi fitnah.', 'law', cr.characterId);
+            addChronicle(next, cr.characterName + ' dibebaskan setelah investigasi otomatis menemukan bukti tidak cukup.', 'law');
+            if (cr.investigation?.falseReport) cr.reporterInvestigation = 'Pelapor ditandai untuk pemeriksaan laporan palsu';
+          }
+          return next;
+        }
+        return prev;
+      });
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [state.crimes, setState]);
 
   const handleReportCrime = () => {
     if (!cs.length) {
@@ -222,10 +300,10 @@ export default function LawPage() {
                 </p>
                 {!x.punished && (
                   <div className="row" style={{ marginTop: '8px' }}>
-                    {x.status !== 'Menunggu keputusan' && x.status !== 'Bukti lemah' && (
+                    {x.status !== 'Menunggu keputusan' && x.status !== 'Bukti lemah' && x.status !== 'Menunggu sidang otomatis' && (
                       <button onClick={() => handleInvestigate(x.id)}>🔎 Investigasi</button>
                     )}
-                    <button onClick={() => handlePunish(x.id)}>⚖️ Sidang / putuskan</button>
+                    <button onClick={() => handlePunish(x.id)}>⚖️ Sidang manual</button>
                   </div>
                 )}
               </div>
